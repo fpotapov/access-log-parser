@@ -30,12 +30,11 @@ public class Main {
                 continue;
             }
 
-            // Если файл существует и это файл, а не папка
             try {
-                // Переменные для хранения результатов
-                int totalLines = 0;       // Общее количество строк
-                int maxLength = Integer.MIN_VALUE; // Длина самой длинной строки
-                int minLength = Integer.MAX_VALUE; // Длина самой короткой строки
+                // Переменные для подсчета
+                int totalRequests = 0;      // Общее количество запросов
+                int googlebotCount = 0;     // Количество запросов от Googlebot
+                int yandexBotCount = 0;     // Количество запросов от YandexBot
 
                 // Чтение файла построчно
                 FileReader fileReader = new FileReader(file);
@@ -43,21 +42,29 @@ public class Main {
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    totalLines++;
-
-                    int length = line.length();
+                    totalRequests++;
 
                     // Проверка длины строки
-                    if (length > 1024) {
-                        throw new LineTooLongException("Строка длиннее 1024 символов: " + line);
+                    if (line.length() > 1024) {
+                        throw new RuntimeException("Строка длиннее 1024 символов: " + line);
                     }
 
-                    // Обновление максимальной и минимальной длины
-                    if (length > maxLength) {
-                        maxLength = length;
+                    // Разбор строки на составляющие
+                    String[] parts = line.split("\"");
+                    if (parts.length < 6) {
+                        System.out.println("Некорректная строка: " + line);
+                        continue;
                     }
-                    if (length < minLength) {
-                        minLength = length;
+
+                    // Извлечение User-Agent
+                    String userAgent = parts[5].trim();
+
+                    // Анализ User-Agent
+                    String botName = extractBotName(userAgent);
+                    if ("Googlebot".equals(botName)) {
+                        googlebotCount++;
+                    } else if ("YandexBot".equals(botName)) {
+                        yandexBotCount++;
                     }
                 }
 
@@ -66,22 +73,51 @@ public class Main {
                 fileReader.close();
 
                 // Вывод результатов
-                System.out.println("Общее количество строк: " + totalLines);
-                System.out.println("Длина самой длинной строки: " + maxLength);
-                System.out.println("Длина самой короткой строки: " + minLength);
+                System.out.println("Общее количество запросов: " + totalRequests);
+                System.out.printf("Доля запросов от Googlebot: %.2f%%%n", (double) googlebotCount / totalRequests * 100);
+                System.out.printf("Доля запросов от YandexBot: %.2f%%%n", (double) yandexBotCount / totalRequests * 100);
 
             } catch (FileNotFoundException e) {
                 System.out.println("Файл не найден: " + e.getMessage());
-            } catch (LineTooLongException e) {
-                System.out.println("Ошибка: " + e.getMessage());
             } catch (IOException e) {
                 System.out.println("Ошибка ввода-вывода: " + e.getMessage());
             } catch (Exception e) {
-                System.out.println("Произошла неизвестная ошибка: " + e.getMessage());
+                System.out.println("Произошла ошибка: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
         scanner.close(); // Закрываем Scanner
+    }
+
+    /**
+     * Метод для извлечения имени бота из User-Agent.
+     */
+    private static String extractBotName(String userAgent) {
+        // Выделяем часть в первых скобках
+        int startIndex = userAgent.indexOf('(');
+        int endIndex = userAgent.indexOf(')');
+        if (startIndex == -1 || endIndex == -1) {
+            return "";
+        }
+
+        String firstBrackets = userAgent.substring(startIndex + 1, endIndex);
+
+        // Разделяем по точке с запятой
+        String[] parts = firstBrackets.split(";");
+        if (parts.length < 2) {
+            return "";
+        }
+
+        // Берем второй фрагмент и очищаем от пробелов
+        String fragment = parts[1].trim();
+
+        // Отделяем часть до слэша
+        int slashIndex = fragment.indexOf('/');
+        if (slashIndex == -1) {
+            return fragment;
+        }
+
+        return fragment.substring(0, slashIndex);
     }
 }
