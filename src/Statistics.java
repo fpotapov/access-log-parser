@@ -3,7 +3,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 public class Statistics {
-    private int totalTraffic = 0;
+    private Long totalTraffic = 0L;
     private OffsetDateTime minTime = null;
     private OffsetDateTime maxTime = null;
 
@@ -12,7 +12,7 @@ public class Statistics {
 
     // Коллекция для подсчета частоты встречаемости операционных систем
     private final Map<String, Integer> osCounts = new HashMap<>();
-    private int totalOsCount = 0; // Общее количество записей с операционными системами
+    private Long totalOsCount = 0L; // Общее количество записей с операционными системами
 
     public void addEntry(LogEntry entry) {
         totalTraffic += entry.getDataSize();
