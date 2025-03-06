@@ -39,9 +39,20 @@ public class Main {
             System.out.println("- " + page);
         }
 
+        System.out.println("Список несуществующих страниц (с кодом ответа 404):");
+        for (String page : statistics.getNotFoundPages()) {
+            System.out.println("- " + page);
+        }
+
         System.out.println("Статистика операционных систем:");
         Map<String, Double> osStats = statistics.getOsStatistics();
         for (Map.Entry<String, Double> entry : osStats.entrySet()) {
+            System.out.printf("- %s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
+        }
+
+        System.out.println("Статистика браузеров:");
+        Map<String, Double> browserStats = statistics.getBrowserStatistics();
+        for (Map.Entry<String, Double> entry : browserStats.entrySet()) {
             System.out.printf("- %s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
         }
     }

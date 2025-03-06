@@ -28,7 +28,11 @@ public class UserAgent {
     }
 
     private String extractBrowser(String userAgentString) {
-        if (userAgentString.contains("Edge")) {
+        if (userAgentString.contains("Googlebot")) {
+            return "Googlebot"; // Общий идентификатор для всех типов Googlebot
+        } else if (userAgentString.contains("YandexBot")) {
+            return "YandexBot";
+        } else if (userAgentString.contains("Edge")) {
             return "Edge";
         } else if (userAgentString.contains("Firefox")) {
             return "Firefox";
