@@ -33,27 +33,8 @@ public class Main {
 
         // Вывод результатов
         System.out.printf("Средний объём трафика за час: %.2f байт%n", statistics.getTrafficRate());
-
-        System.out.println("Список страниц с кодом ответа 200:");
-        for (String page : statistics.getPages()) {
-            System.out.println("- " + page);
-        }
-
-        System.out.println("Список несуществующих страниц (с кодом ответа 404):");
-        for (String page : statistics.getNotFoundPages()) {
-            System.out.println("- " + page);
-        }
-
-        System.out.println("Статистика операционных систем:");
-        Map<String, Double> osStats = statistics.getOsStatistics();
-        for (Map.Entry<String, Double> entry : osStats.entrySet()) {
-            System.out.printf("- %s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
-        }
-
-        System.out.println("Статистика браузеров:");
-        Map<String, Double> browserStats = statistics.getBrowserStatistics();
-        for (Map.Entry<String, Double> entry : browserStats.entrySet()) {
-            System.out.printf("- %s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
-        }
+        System.out.printf("Среднее количество посещений за час: %.2f%n", statistics.getAverageVisitsPerHour());
+        System.out.printf("Среднее количество ошибочных запросов за час: %.2f%n", statistics.getAverageErrorRequestsPerHour());
+        System.out.printf("Средняя посещаемость одним пользователем: %.2f%n", statistics.getAverageVisitsPerUser());
     }
 }

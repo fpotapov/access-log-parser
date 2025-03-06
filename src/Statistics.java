@@ -1,6 +1,7 @@
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Statistics {
     private Long totalTraffic = 0L;
@@ -20,6 +21,11 @@ public class Statistics {
     // Коллекция для подсчета частоты встречаемости браузеров
     private final Map<String, Integer> browserCounts = new HashMap<>();
     private Long totalBrowserCount = 0L; // Общее количество записей с браузерами
+
+    // Новые поля
+    private Long userVisits = 0L; // Количество посещений реальными пользователями (не ботами)
+    private Long errorRequests = 0L; // Количество ошибочных запросов (4xx или 5xx)
+    private final Set<String> uniqueUserIps = new HashSet<>(); // Уникальные IP-адреса реальных пользователей
 
     public void addEntry(LogEntry entry) {
         totalTraffic += entry.getDataSize();
@@ -54,6 +60,21 @@ public class Statistics {
         if (browser != null && !browser.isEmpty()) {
             browserCounts.put(browser, browserCounts.getOrDefault(browser, 0) + 1);
             totalBrowserCount++;
+        }
+
+        // Проверяем, является ли пользователь ботом
+        boolean isBot = entry.getUserAgent().getBrowser().toLowerCase().contains("bot");
+
+        // Подсчитываем посещения реальных пользователей
+        if (!isBot) {
+            userVisits++;
+            uniqueUserIps.add(entry.getIpAddress());
+        }
+
+        // Подсчитываем ошибочные запросы (4xx или 5xx)
+        int responseCode = entry.getResponseCode();
+        if ((responseCode >= 400 && responseCode < 600)) {
+            errorRequests++;
         }
     }
 
@@ -102,5 +123,42 @@ public class Statistics {
             browserStats.put(browser, share);
         }
         return browserStats;
+    }
+
+    // Метод подсчёта среднего количества посещений сайта за час (только реальные пользователи)
+    public double getAverageVisitsPerHour() {
+        if (minTime == null || maxTime == null) {
+            return 0;
+        }
+
+        long hours = Duration.between(minTime, maxTime).toHours();
+        if (hours == 0) {
+            hours = 1; // Чтобы избежать деления на ноль
+        }
+
+        return (double) userVisits / hours;
+    }
+
+    // Метод подсчёта среднего количества ошибочных запросов в час
+    public double getAverageErrorRequestsPerHour() {
+        if (minTime == null || maxTime == null) {
+            return 0;
+        }
+
+        long hours = Duration.between(minTime, maxTime).toHours();
+        if (hours == 0) {
+            hours = 1; // Чтобы избежать деления на ноль
+        }
+
+        return (double) errorRequests / hours;
+    }
+
+    // Метод расчёта средней посещаемости одним пользователем
+    public double getAverageVisitsPerUser() {
+        if (uniqueUserIps.isEmpty()) {
+            return 0;
+        }
+
+        return (double) userVisits / uniqueUserIps.size();
     }
 }
