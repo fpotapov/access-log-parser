@@ -32,9 +32,11 @@ public class Main {
         }
 
         // Вывод результатов
-        System.out.printf("Средний объём трафика за час: %.2f байт%n", statistics.getTrafficRate());
-        System.out.printf("Среднее количество посещений за час: %.2f%n", statistics.getAverageVisitsPerHour());
-        System.out.printf("Среднее количество ошибочных запросов за час: %.2f%n", statistics.getAverageErrorRequestsPerHour());
-        System.out.printf("Средняя посещаемость одним пользователем: %.2f%n", statistics.getAverageVisitsPerUser());
+        System.out.printf("Пиковая посещаемость за одну секунду: %d%n", statistics.getPeakVisitsPerSecond());
+        System.out.println("Список доменов из referer-ов:");
+        for (String domain : statistics.getReferrerDomains()) {
+            System.out.println("- " + domain);
+        }
+        System.out.printf("Максимальная посещаемость одним пользователем: %d%n", statistics.getMaxVisitsPerUser());
     }
 }

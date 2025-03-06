@@ -1,7 +1,6 @@
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Statistics {
     private Long totalTraffic = 0L;
@@ -26,6 +25,9 @@ public class Statistics {
     private Long userVisits = 0L; // Количество посещений реальными пользователями (не ботами)
     private Long errorRequests = 0L; // Количество ошибочных запросов (4xx или 5xx)
     private final Set<String> uniqueUserIps = new HashSet<>(); // Уникальные IP-адреса реальных пользователей
+    private final Map<Long, Integer> visitsPerSecond = new HashMap<Long, Integer>(); // Посещения за каждую секунду
+    private final Set<String> referrerDomains = new HashSet<>(); // Домены из referer-ов
+    private final Map<String, Integer> visitsPerUser = new HashMap<>(); // Посещения для каждого уникального пользователя
 
     public void addEntry(LogEntry entry) {
         totalTraffic += entry.getDataSize();
@@ -69,6 +71,14 @@ public class Statistics {
         if (!isBot) {
             userVisits++;
             uniqueUserIps.add(entry.getIpAddress());
+
+            // Считаем посещения за каждую секунду
+            Long epochSecond = entry.getTimestamp().toEpochSecond();
+            visitsPerSecond.put(epochSecond, visitsPerSecond.getOrDefault(epochSecond, 0) + 1);
+
+            // Считаем посещения для каждого уникального пользователя
+            String ip = entry.getIpAddress();
+            visitsPerUser.put(ip, visitsPerUser.getOrDefault(ip, 0) + 1);
         }
 
         // Подсчитываем ошибочные запросы (4xx или 5xx)
@@ -76,6 +86,60 @@ public class Statistics {
         if ((responseCode >= 400 && responseCode < 600)) {
             errorRequests++;
         }
+
+        // Собираем домены из referer-ов
+        String referer = entry.getReferer();
+        if (referer != null && !referer.equals("-")) {
+            try {
+                String domain = extractDomainFromReferer(referer);
+                if (domain != null && !domain.isEmpty()) {
+                    referrerDomains.add(domain);
+                }
+            } catch (Exception e) {
+                System.out.println("Ошибка при обработке referer: " + referer);
+            }
+        }
+    }
+
+    // Метод для извлечения домена из referer
+    private String extractDomainFromReferer(String referer) {
+        try {
+            // Убираем протокол (http:// или https://)
+            String withoutProtocol = referer.replaceFirst("https?://", "");
+
+            // Берем часть строки до первого символа '/'
+            int endIndex = withoutProtocol.indexOf('/');
+            if (endIndex == -1) {
+                return withoutProtocol; // Если '/' нет, возвращаем всю строку
+            }
+
+            return withoutProtocol.substring(0, endIndex);
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при извлечении домена из referer: " + referer, e);
+        }
+    }
+
+    // Метод расчёта пиковой посещаемости сайта (в секунду)
+    public int getPeakVisitsPerSecond() {
+        if (visitsPerSecond.isEmpty()) {
+            return 0;
+        }
+
+        return Collections.max(visitsPerSecond.values());
+    }
+
+    // Метод, возвращающий список сайтов, со страниц которых есть ссылки на текущий сайт
+    public Set<String> getReferrerDomains() {
+        return Collections.unmodifiableSet(referrerDomains); // Возвращаем неизменяемую копию
+    }
+
+    // Метод расчёта максимальной посещаемости одним пользователем
+    public int getMaxVisitsPerUser() {
+        if (visitsPerUser.isEmpty()) {
+            return 0;
+        }
+
+        return Collections.max(visitsPerUser.values());
     }
 
     public double getTrafficRate() {
