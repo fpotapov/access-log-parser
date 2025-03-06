@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.Scanner;
+import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -19,13 +20,29 @@ public class Main {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                LogEntry entry = new LogEntry(line);
-                statistics.addEntry(entry);
+                try {
+                    LogEntry entry = new LogEntry(line);
+                    statistics.addEntry(entry);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Ошибка при обработке строки: " + e.getMessage());
+                }
             }
         } catch (IOException e) {
             System.out.println("Ошибка чтения файла: " + e.getMessage());
         }
 
+        // Вывод результатов
         System.out.printf("Средний объём трафика за час: %.2f байт%n", statistics.getTrafficRate());
+
+        System.out.println("Список страниц с кодом ответа 200:");
+        for (String page : statistics.getPages()) {
+            System.out.println("- " + page);
+        }
+
+        System.out.println("Статистика операционных систем:");
+        Map<String, Double> osStats = statistics.getOsStatistics();
+        for (Map.Entry<String, Double> entry : osStats.entrySet()) {
+            System.out.printf("- %s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
+        }
     }
 }
